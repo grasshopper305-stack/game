@@ -129,6 +129,7 @@
             display: none;
             box-shadow: 0 0 30px rgba(255, 0, 255, 0.8), 0 0 60px rgba(0, 255, 255, 0.5);
             text-shadow: 0 0 10px #00ffff;
+            z-index: 1000;
         }
 
         .message.show {
@@ -139,7 +140,7 @@
             margin-top: 20px;
             padding: 10px 30px;
             font-size: 18px;
-            background: linear-gradient(135deg, #ff00ff 0%, #00ffff 100%);
+            background: linear-gradient(135deg, #ff00ff, #00ffff);
             color: white;
             border: none;
             border-radius: 25px;
@@ -329,7 +330,6 @@
 
     <audio id="backgroundMusic" loop>
         <source src="game-music.mp3" type="audio/mpeg">
-        Your browser does not support the audio element.
     </audio>
 
     <audio id="fartSound">
@@ -366,108 +366,14 @@
         let musicAttempted = false;
         let musicLoading = false;
         let playerNickname = null;
-        let gamePaused = true; // Start with game paused
+        let gamePaused = true;
 
-        // Leaderboard data (stored in localStorage)
-        function getLeaderboard() {
-            const saved = localStorage.getItem('gameLeaderboard');
-            return saved ? JSON.parse(saved) : [];
-        }
-
-        function saveLeaderboard(leaderboard) {
-            localStorage.setItem('gameLeaderboard', JSON.stringify(leaderboard));
-        }
-
-        function updateLeaderboard(nickname, level) {
-            let leaderboard = getLeaderboard();
-            
-            // Check if player already exists
-            const existingPlayer = leaderboard.find(p => p.nickname === nickname);
-            
-            if (existingPlayer) {
-                // Update if new level is higher
-                if (level > existingPlayer.level) {
-                    existingPlayer.level = level;
-                }
-            } else {
-                // Add new player
-                leaderboard.push({ nickname, level });
-            }
-            
-            // Sort by level (highest first)
-            leaderboard.sort((a, b) => b.level - a.level);
-            
-            // Keep top 10
-            leaderboard = leaderboard.slice(0, 10);
-            
-            saveLeaderboard(leaderboard);
-            displayLeaderboard();
-        }
-
-        function displayLeaderboard() {
-            const leaderboard = getLeaderboard();
-            const list = document.getElementById('leaderboardList');
-            list.innerHTML = '';
-            
-            if (leaderboard.length === 0) {
-                list.innerHTML = '<li style="text-align: center; color: #999;">No players yet!</li>';
-                return;
-            }
-            
-            leaderboard.forEach((player, index) => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span>${index + 1}. <span class="player-name">${player.nickname}</span></span>
-                    <span class="player-level">Level ${player.level}</span>
-                `;
-                list.appendChild(li);
-            });
-        }
-
-        // Show nickname prompt on load
-        const nicknamePrompt = document.getElementById('nicknamePrompt');
-        const nicknameInput = document.getElementById('nicknameInput');
-        const submitNickname = document.getElementById('submitNickname');
-        const readyModal = document.getElementById('readyModal');
-        const startGameBtn = document.getElementById('startGameBtn');
-
-        nicknamePrompt.classList.add('show');
-
-        submitNickname.addEventListener('click', () => {
-            const nickname = nicknameInput.value.trim();
-            if (nickname) {
-                playerNickname = nickname;
-                nicknamePrompt.classList.remove('show');
-                updateLeaderboard(playerNickname, 1);
-                // Show ready modal
-                readyModal.classList.add('show');
-            } else {
-                alert('Please enter a nickname!');
-            }
-        });
-
-        nicknameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                submitNickname.click();
-            }
-        });
-
-        // Start game button
-        startGameBtn.addEventListener('click', () => {
-            readyModal.classList.remove('show');
-            gamePaused = false;
-            canvas.focus();
-        });
-
-        // Function to play fart sound
         function playFartSound() {
-            fartSound.currentTime = 0; // Reset to start
-            fartSound.play().catch(e => console.log('Fart sound failed to play:', e));
+            fartSound.currentTime = 0;
+            fartSound.play().catch(e => console.log('Fart sound failed:', e));
         }
 
-        // Function to show NOICE text
         function showNoiceText() {
-            // Create NOICE text element
             const noiceDiv = document.createElement('div');
             noiceDiv.textContent = 'NOICE!';
             noiceDiv.style.position = 'fixed';
@@ -484,13 +390,11 @@
             
             document.body.appendChild(noiceDiv);
             
-            // Remove after 1.5 seconds
             setTimeout(() => {
                 noiceDiv.remove();
             }, 1500);
         }
 
-        // Function to start music safely
         async function startMusic() {
             if (musicLoading || musicPlaying) return;
             
@@ -500,33 +404,41 @@
                 musicPlaying = true;
                 musicAttempted = true;
                 toggleMusicBtn.textContent = '🔊 Pause Music';
-                console.log('Music started successfully');
+                console.log('Music started');
             } catch (e) {
-                console.error('Music failed to play:', e);
+                console.log('Music failed:', e);
                 toggleMusicBtn.textContent = '🔇 Click to Start Music';
             } finally {
                 musicLoading = false;
             }
         }
 
-        // Auto-play music on first keypress (arrow keys to start playing)
         document.addEventListener('keydown', () => {
             if (!musicAttempted) {
                 startMusic();
             }
         }, { once: true });
 
-        // Also try on any click as backup
         document.addEventListener('click', (e) => {
-            // Don't trigger if clicking the music button
             if (e.target === toggleMusicBtn) return;
             if (!musicAttempted) {
                 startMusic();
             }
         }, { once: true });
 
-        // Game state
-        let gameState = {
+        toggleMusicBtn.addEventListener('click', async () => {
+            if (musicLoading) return;
+            
+            if (!musicAttempted || !musicPlaying) {
+                await startMusic();
+            } else {
+                backgroundMusic.pause();
+                toggleMusicBtn.textContent = '🔇 Play Music';
+                musicPlaying = false;
+            }
+        });
+
+        const gameState = {
             level: 1,
             deaths: 0,
             player: {
@@ -548,7 +460,6 @@
             totalCoins: 0
         };
 
-        // Level definitions
         const levels = [
             {
                 player: { x: 50, y: 200 },
@@ -556,12 +467,12 @@
                 end: { x: 500, y: 150, width: 80, height: 100 },
                 walls: [
                     { x: 0, y: 0, width: 600, height: 140 },
-                    { x: 0, y: 260, width: 600, height: 140 },
+                    { x: 0, y: 260, width: 600, height: 140 }
                 ],
                 enemies: [
                     { x: 200, y: 200, radius: 10, speedX: 2, speedY: 0, color: '#00ffff' },
                     { x: 300, y: 200, radius: 10, speedX: -2, speedY: 0, color: '#00ccff' },
-                    { x: 400, y: 200, radius: 10, speedX: 2, speedY: 0, color: '#0099ff' },
+                    { x: 400, y: 200, radius: 10, speedX: 2, speedY: 0, color: '#0099ff' }
                 ],
                 coins: [
                     { x: 300, y: 200, radius: 8, collected: false }
@@ -573,17 +484,17 @@
                 end: { x: 500, y: 150, width: 80, height: 100 },
                 walls: [
                     { x: 0, y: 0, width: 600, height: 120 },
-                    { x: 0, y: 280, width: 600, height: 120 },
+                    { x: 0, y: 280, width: 600, height: 120 }
                 ],
                 enemies: [
                     { x: 200, y: 180, radius: 10, speedX: 0, speedY: 2, color: '#00ffff' },
                     { x: 250, y: 220, radius: 10, speedX: 0, speedY: -2, color: '#00ccff' },
                     { x: 350, y: 180, radius: 10, speedX: 0, speedY: 2, color: '#0099ff' },
-                    { x: 400, y: 220, radius: 10, speedX: 0, speedY: -2, color: '#00ffff' },
+                    { x: 400, y: 220, radius: 10, speedX: 0, speedY: -2, color: '#00ffff' }
                 ],
                 coins: [
                     { x: 200, y: 200, radius: 8, collected: false },
-                    { x: 350, y: 200, radius: 8, collected: false },
+                    { x: 350, y: 200, radius: 8, collected: false }
                 ]
             },
             {
@@ -592,17 +503,19 @@
                 end: { x: 500, y: 120, width: 80, height: 160 },
                 walls: [
                     { x: 0, y: 0, width: 600, height: 110 },
-                    { x: 0, y: 290, width: 600, height: 110 },
+                    { x: 0, y: 290, width: 600, height: 110 }
                 ],
                 enemies: [
-                    { x: 200, y: 180, radius: 10, speedX: 2, speedY: 1, color: '#00ffff' },
-                    { x: 300, y: 200, radius: 10, speedX: 1.5, speedY: 1.5, color: '#00ccff' },
-                    { x: 400, y: 220, radius: 10, speedX: -2, speedY: -1, color: '#0099ff' },
+                    { x: 150, y: 150, radius: 10, speedX: 2, speedY: 1, color: '#00ffff' },
+                    { x: 250, y: 250, radius: 10, speedX: -2, speedY: -1, color: '#00ccff' },
+                    { x: 350, y: 150, radius: 10, speedX: 2, speedY: 1, color: '#0099ff' },
+                    { x: 450, y: 250, radius: 10, speedX: -2, speedY: -1, color: '#00ffff' },
+                    { x: 300, y: 200, radius: 10, speedX: 1.5, speedY: 1.5, color: '#00ccff' }
                 ],
                 coins: [
                     { x: 200, y: 200, radius: 8, collected: false },
                     { x: 300, y: 200, radius: 8, collected: false },
-                    { x: 400, y: 200, radius: 8, collected: false },
+                    { x: 400, y: 200, radius: 8, collected: false }
                 ]
             },
             {
@@ -611,38 +524,35 @@
                 end: { x: 500, y: 150, width: 80, height: 100 },
                 walls: [
                     { x: 0, y: 0, width: 600, height: 140 },
-                    { x: 0, y: 260, width: 600, height: 140 },
+                    { x: 0, y: 260, width: 600, height: 140 }
                 ],
                 enemies: [
                     { x: 180, y: 200, radius: 10, speedX: 2, speedY: 0, color: '#00ffff' },
                     { x: 300, y: 200, radius: 10, speedX: -2, speedY: 0, color: '#00ccff' },
-                    { x: 420, y: 200, radius: 10, speedX: 2, speedY: 0, color: '#0099ff' },
+                    { x: 420, y: 200, radius: 10, speedX: 2, speedY: 0, color: '#0099ff' }
                 ],
                 coins: [
                     { x: 240, y: 200, radius: 8, collected: false },
-                    { x: 360, y: 200, radius: 8, collected: false },
+                    { x: 360, y: 200, radius: 8, collected: false }
                 ]
             },
             {
                 player: { x: 50, y: 200 },
-                start: { x: 20, y: 150, width: 80, height: 100 },
-                end: { x: 500, y: 150, width: 80, height: 100 },
+                start: { x: 20, y: 120, width: 80, height: 160 },
+                end: { x: 500, y: 120, width: 80, height: 160 },
                 walls: [
-                    { x: 0, y: 0, width: 600, height: 140 },
-                    { x: 0, y: 260, width: 600, height: 140 },
+                    { x: 0, y: 0, width: 600, height: 110 },
+                    { x: 0, y: 290, width: 600, height: 110 }
                 ],
                 enemies: [
-                    { x: 150, y: 170, radius: 10, speedX: 2.5, speedY: 1.5, color: '#00ffff' },
-                    { x: 250, y: 230, radius: 10, speedX: -2.5, speedY: -1.5, color: '#00ccff' },
-                    { x: 350, y: 170, radius: 10, speedX: 2.5, speedY: 1.5, color: '#0099ff' },
-                    { x: 450, y: 230, radius: 10, speedX: -2.5, speedY: -1.5, color: '#00ffff' },
-                    { x: 300, y: 200, radius: 10, speedX: 2, speedY: 2, color: '#00ccff' },
-                    { x: 200, y: 200, radius: 10, speedX: -2, speedY: 2, color: '#0099ff' },
+                    { x: 200, y: 180, radius: 10, speedX: 2, speedY: 1, color: '#00ffff' },
+                    { x: 300, y: 200, radius: 10, speedX: 1.5, speedY: 1.5, color: '#00ccff' },
+                    { x: 400, y: 220, radius: 10, speedX: -2, speedY: -1, color: '#0099ff' }
                 ],
                 coins: [
                     { x: 200, y: 200, radius: 8, collected: false },
                     { x: 300, y: 200, radius: 8, collected: false },
-                    { x: 400, y: 200, radius: 8, collected: false },
+                    { x: 400, y: 200, radius: 8, collected: false }
                 ]
             },
             {
@@ -652,20 +562,20 @@
                 walls: [
                     { x: 0, y: 0, width: 600, height: 110 },
                     { x: 0, y: 290, width: 600, height: 110 },
-                    { x: 200, y: 150, width: 60, height: 100 }, // Left obstacle
-                    { x: 340, y: 150, width: 60, height: 100 }, // Right obstacle
+                    { x: 200, y: 150, width: 60, height: 100 },
+                    { x: 340, y: 150, width: 60, height: 100 }
                 ],
                 enemies: [
                     { x: 150, y: 140, radius: 10, speedX: 0, speedY: 3, color: '#00ffff' },
                     { x: 270, y: 260, radius: 10, speedX: 0, speedY: -3, color: '#00ccff' },
                     { x: 330, y: 140, radius: 10, speedX: 0, speedY: 3, color: '#0099ff' },
                     { x: 450, y: 260, radius: 10, speedX: 0, speedY: -3, color: '#00ffff' },
-                    { x: 300, y: 200, radius: 10, speedX: 2.5, speedY: 0, color: '#00ccff' },
+                    { x: 300, y: 200, radius: 10, speedX: 2.5, speedY: 0, color: '#00ccff' }
                 ],
                 coins: [
                     { x: 150, y: 200, radius: 8, collected: false },
                     { x: 300, y: 200, radius: 8, collected: false },
-                    { x: 450, y: 200, radius: 8, collected: false },
+                    { x: 450, y: 200, radius: 8, collected: false }
                 ]
             },
             {
@@ -674,7 +584,7 @@
                 end: { x: 500, y: 130, width: 80, height: 140 },
                 walls: [
                     { x: 0, y: 0, width: 600, height: 120 },
-                    { x: 0, y: 280, width: 600, height: 120 },
+                    { x: 0, y: 280, width: 600, height: 120 }
                 ],
                 enemies: [
                     { x: 150, y: 160, radius: 10, speedX: 2, speedY: 2, color: '#00ffff' },
@@ -683,13 +593,13 @@
                     { x: 300, y: 240, radius: 10, speedX: -2, speedY: -2, color: '#00ffff' },
                     { x: 350, y: 160, radius: 10, speedX: 2, speedY: 2, color: '#00ccff' },
                     { x: 400, y: 240, radius: 10, speedX: -2, speedY: -2, color: '#0099ff' },
-                    { x: 450, y: 200, radius: 10, speedX: -2.5, speedY: 1.5, color: '#00ffff' },
+                    { x: 450, y: 200, radius: 10, speedX: -2.5, speedY: 1.5, color: '#00ffff' }
                 ],
                 coins: [
                     { x: 180, y: 200, radius: 8, collected: false },
                     { x: 300, y: 180, radius: 8, collected: false },
                     { x: 300, y: 220, radius: 8, collected: false },
-                    { x: 420, y: 200, radius: 8, collected: false },
+                    { x: 420, y: 200, radius: 8, collected: false }
                 ]
             },
             {
@@ -701,7 +611,7 @@
                     { x: 0, y: 310, width: 600, height: 90 },
                     { x: 180, y: 140, width: 40, height: 120 },
                     { x: 280, y: 140, width: 40, height: 120 },
-                    { x: 380, y: 140, width: 40, height: 120 },
+                    { x: 380, y: 140, width: 40, height: 120 }
                 ],
                 enemies: [
                     { x: 140, y: 120, radius: 10, speedX: 0, speedY: 3, color: '#00ffff' },
@@ -711,18 +621,17 @@
                     { x: 340, y: 120, radius: 10, speedX: 0, speedY: 3, color: '#00ccff' },
                     { x: 340, y: 280, radius: 10, speedX: 0, speedY: -3, color: '#0099ff' },
                     { x: 440, y: 120, radius: 10, speedX: 0, speedY: 3, color: '#00ffff' },
-                    { x: 440, y: 280, radius: 10, speedX: 0, speedY: -3, color: '#00ccff' },
+                    { x: 440, y: 280, radius: 10, speedX: 0, speedY: -3, color: '#00ccff' }
                 ],
                 coins: [
                     { x: 160, y: 200, radius: 8, collected: false },
                     { x: 260, y: 200, radius: 8, collected: false },
                     { x: 360, y: 200, radius: 8, collected: false },
-                    { x: 460, y: 200, radius: 8, collected: false },
+                    { x: 460, y: 200, radius: 8, collected: false }
                 ]
             }
         ];
 
-        // Initialize level
         function loadLevel(levelNum) {
             const level = levels[levelNum - 1];
             gameState.player.x = level.player.x;
@@ -737,7 +646,6 @@
             updateUI();
         }
 
-        // Input handling
         document.addEventListener('keydown', (e) => {
             gameState.keys[e.key] = true;
         });
@@ -753,22 +661,6 @@
             canvas.focus();
         });
 
-        // Music toggle
-        toggleMusicBtn.addEventListener('click', async () => {
-            if (musicLoading) return; // Prevent multiple clicks
-            
-            if (!musicAttempted || !musicPlaying) {
-                // Start music
-                await startMusic();
-            } else {
-                // Pause music
-                backgroundMusic.pause();
-                toggleMusicBtn.textContent = '🔇 Play Music';
-                musicPlaying = false;
-            }
-        });
-
-        // Update UI
         function updateUI() {
             document.getElementById('level').textContent = gameState.level;
             document.getElementById('deaths').textContent = gameState.deaths;
@@ -776,7 +668,6 @@
             document.getElementById('totalCoins').textContent = gameState.totalCoins;
         }
 
-        // Check collision between circles
         function checkCircleCollision(x1, y1, r1, x2, y2, r2) {
             const dx = x1 - x2;
             const dy = y1 - y2;
@@ -784,7 +675,6 @@
             return distance < r1 + r2;
         }
 
-        // Check collision with rectangle
         function checkRectCollision(x, y, size, rect) {
             return x - size < rect.x + rect.width &&
                    x + size > rect.x &&
@@ -792,7 +682,6 @@
                    y + size > rect.y;
         }
 
-        // Check if player is in zone
         function isInZone(zone) {
             return gameState.player.x > zone.x &&
                    gameState.player.x < zone.x + zone.width &&
@@ -800,7 +689,6 @@
                    gameState.player.y < zone.y + zone.height;
         }
 
-        // Move player
         function movePlayer() {
             const p = gameState.player;
             let newX = p.x;
@@ -811,7 +699,6 @@
             if (gameState.keys['ArrowUp']) newY -= p.speed;
             if (gameState.keys['ArrowDown']) newY += p.speed;
 
-            // Check wall collisions
             let canMove = true;
             for (let wall of gameState.walls) {
                 if (checkRectCollision(newX, newY, p.size, wall)) {
@@ -820,7 +707,6 @@
                 }
             }
 
-            // Keep player in bounds
             if (newX - p.size < 0 || newX + p.size > canvas.width) canMove = false;
             if (newY - p.size < 0 || newY + p.size > canvas.height) canMove = false;
 
@@ -830,13 +716,11 @@
             }
         }
 
-        // Move enemies
         function moveEnemies() {
             for (let enemy of gameState.enemies) {
                 enemy.x += enemy.speedX;
                 enemy.y += enemy.speedY;
 
-                // Bounce off walls
                 for (let wall of gameState.walls) {
                     if (checkRectCollision(enemy.x, enemy.y, enemy.radius, wall)) {
                         enemy.speedY *= -1;
@@ -844,7 +728,6 @@
                     }
                 }
 
-                // Bounce off canvas edges
                 if (enemy.x - enemy.radius < 0 || enemy.x + enemy.radius > canvas.width) {
                     enemy.speedX *= -1;
                 }
@@ -854,11 +737,9 @@
             }
         }
 
-        // Check collisions
         function checkCollisions() {
             const p = gameState.player;
 
-            // Check enemy collisions
             for (let enemy of gameState.enemies) {
                 if (checkCircleCollision(p.x, p.y, p.size, enemy.x, enemy.y, enemy.radius)) {
                     playerDeath();
@@ -866,7 +747,6 @@
                 }
             }
 
-            // Check coin collection
             for (let coin of gameState.coins) {
                 if (!coin.collected && checkCircleCollision(p.x, p.y, p.size, coin.x, coin.y, coin.radius)) {
                     coin.collected = true;
@@ -875,13 +755,11 @@
                 }
             }
 
-            // Check win condition
             if (isInZone(gameState.zones.end) && gameState.collectedCoins === gameState.totalCoins) {
                 levelComplete();
             }
         }
 
-        // Player death
         function playerDeath() {
             playFartSound();
             gameState.deaths++;
@@ -889,18 +767,15 @@
             showMessage('You died! Try again.');
         }
 
-        // Level complete
         function levelComplete() {
             showNoiceText();
             if (gameState.level < levels.length) {
                 gameState.level++;
-                // Update leaderboard with new level
                 if (playerNickname) {
                     updateLeaderboard(playerNickname, gameState.level);
                 }
-                showMessage(`Level ${gameState.level - 1} Complete!`);
+                showMessage('Level ' + (gameState.level - 1) + ' Complete!');
             } else {
-                // Beat all levels
                 if (playerNickname) {
                     updateLeaderboard(playerNickname, levels.length);
                 }
@@ -910,20 +785,16 @@
             }
         }
 
-        // Show message
         function showMessage(text) {
             messageText.textContent = text;
             messageDiv.classList.add('show');
             gamePaused = true;
         }
 
-        // Draw game
         function draw() {
-            // Clear canvas with dark purple
             ctx.fillStyle = '#0a0015';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw walls with neon glow
             ctx.fillStyle = 'rgba(102, 0, 204, 0.85)';
             ctx.shadowBlur = 15;
             ctx.shadowColor = '#9933ff';
@@ -932,7 +803,6 @@
             }
             ctx.shadowBlur = 0;
 
-            // Draw start zone
             ctx.fillStyle = 'rgba(255, 0, 255, 0.15)';
             const start = gameState.zones.start;
             ctx.fillRect(start.x, start.y, start.width, start.height);
@@ -943,7 +813,6 @@
             ctx.strokeRect(start.x, start.y, start.width, start.height);
             ctx.shadowBlur = 0;
 
-            // Draw end zone
             ctx.fillStyle = 'rgba(0, 255, 255, 0.15)';
             const end = gameState.zones.end;
             ctx.fillRect(end.x, end.y, end.width, end.height);
@@ -954,7 +823,6 @@
             ctx.strokeRect(end.x, end.y, end.width, end.height);
             ctx.shadowBlur = 0;
 
-            // Draw coins - bright yellow with glow
             for (let coin of gameState.coins) {
                 if (!coin.collected) {
                     ctx.fillStyle = '#ffff00';
@@ -970,7 +838,6 @@
                 }
             }
 
-            // Draw enemies with neon glow
             for (let enemy of gameState.enemies) {
                 ctx.fillStyle = enemy.color;
                 ctx.shadowBlur = 20;
@@ -981,7 +848,6 @@
                 ctx.shadowBlur = 0;
             }
 
-            // Draw player with neon glow
             ctx.fillStyle = gameState.player.color;
             ctx.shadowBlur = 20;
             ctx.shadowColor = '#ff00ff';
@@ -1002,7 +868,6 @@
             ctx.shadowBlur = 0;
         }
 
-        // Game loop
         function gameLoop() {
             if (!messageDiv.classList.contains('show') && !gamePaused) {
                 movePlayer();
@@ -1013,10 +878,99 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Start game
+        function getLeaderboard() {
+            const saved = localStorage.getItem('gameLeaderboard');
+            return saved ? JSON.parse(saved) : [];
+        }
+
+        function saveLeaderboard(leaderboard) {
+            localStorage.setItem('gameLeaderboard', JSON.stringify(leaderboard));
+        }
+
+        function updateLeaderboard(nickname, level) {
+            let leaderboard = getLeaderboard();
+            
+            const existingPlayer = leaderboard.find(p => p.nickname === nickname);
+            
+            if (existingPlayer) {
+                if (level > existingPlayer.level) {
+                    existingPlayer.level = level;
+                }
+            } else {
+                leaderboard.push({ nickname: nickname, level: level });
+            }
+            
+            leaderboard.sort((a, b) => b.level - a.level);
+            leaderboard = leaderboard.slice(0, 10);
+            
+            saveLeaderboard(leaderboard);
+            displayLeaderboard();
+        }
+
+        function displayLeaderboard() {
+            const leaderboard = getLeaderboard();
+            const list = document.getElementById('leaderboardList');
+            list.innerHTML = '';
+            
+            if (leaderboard.length === 0) {
+                list.innerHTML = '<li style="text-align: center; color: #999;">No players yet!</li>';
+                return;
+            }
+            
+            leaderboard.forEach((player, index) => {
+                const li = document.createElement('li');
+                const rankSpan = document.createElement('span');
+                rankSpan.textContent = (index + 1) + '. ';
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'player-name';
+                nameSpan.textContent = player.nickname;
+                rankSpan.appendChild(nameSpan);
+                
+                const levelSpan = document.createElement('span');
+                levelSpan.className = 'player-level';
+                levelSpan.textContent = 'Level ' + player.level;
+                
+                li.appendChild(rankSpan);
+                li.appendChild(levelSpan);
+                list.appendChild(li);
+            });
+        }
+
+        const nicknamePrompt = document.getElementById('nicknamePrompt');
+        const nicknameInput = document.getElementById('nicknameInput');
+        const submitNickname = document.getElementById('submitNickname');
+        const readyModal = document.getElementById('readyModal');
+        const startGameBtn = document.getElementById('startGameBtn');
+
+        nicknamePrompt.classList.add('show');
+
+        submitNickname.addEventListener('click', () => {
+            const nickname = nicknameInput.value.trim();
+            if (nickname) {
+                playerNickname = nickname;
+                nicknamePrompt.classList.remove('show');
+                updateLeaderboard(playerNickname, 1);
+                readyModal.classList.add('show');
+            } else {
+                alert('Please enter a nickname!');
+            }
+        });
+
+        nicknameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                submitNickname.click();
+            }
+        });
+
+        startGameBtn.addEventListener('click', () => {
+            readyModal.classList.remove('show');
+            gamePaused = false;
+            canvas.focus();
+        });
+
         loadLevel(1);
-        canvas.focus(); // Ensure canvas has focus for keyboard input
-        displayLeaderboard(); // Show initial leaderboard
+        canvas.focus();
+        displayLeaderboard();
         gameLoop();
     </script>
 </body>
