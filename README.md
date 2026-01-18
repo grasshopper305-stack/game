@@ -1,14 +1,33 @@
 # World's Hardest Game - Vercel Deployment
 
+## Features
+- 8 challenging levels
+- **Global leaderboard** powered by JSONBin.io (syncs across all players!)
+- Neon cyberpunk theme
+- Background music
+- Sound effects (fart on death, "NOICE!" on success)
+- MC Hammer dancing on both sides of logo
+- Responsive game controls
+
 ## Files Included
-- `index.html` - Main game file
+- `index.html` - Main game file (with JSONBin integration)
 - `logo.png` - CamSoda logo
 - `mc-hammer.gif` - Dancing MC Hammer
 - `game-music.mp3` - Background music
 - `fart-sound.mp3` - Death sound effect
 - `vercel.json` - Vercel configuration
+- `JSONBIN_SETUP.md` - **Step-by-step JSONBin setup guide (2 minutes!)**
 
-## How to Deploy to Vercel
+## Quick Start
+
+### Step 1: Set Up JSONBin (2 minutes)
+**For a global leaderboard, follow the guide in `JSONBIN_SETUP.md`**
+
+This is optional but recommended! Without JSONBin, the leaderboard only saves locally per browser.
+
+JSONBin is even easier than Firebase - just one API key!
+
+### Step 2: Deploy Your Game
 
 ### Option 1: Deploy via Vercel CLI (Recommended)
 
