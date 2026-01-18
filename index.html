@@ -353,10 +353,12 @@
     </div>
 
     <script>
-        // Shared Global Leaderboard - EVERYONE uses this same bin
+        // Shared Global Leaderboard - Your JSONBin API Key
         const JSONBIN_API_KEY = '$2a$10$EfY5xkmatdHak8/IeaIUau1a0ZthrfyFY9×3ejlajKhd1npnHgmYK';
-        const JSONBIN_BIN_ID = '679e65c5ad19ca34f8dc50a3'; // Shared bin for ALL players
         const USE_CLOUD_LEADERBOARD = true;
+        
+        // This will be set after first bin creation
+        let SHARED_BIN_ID = '679e6e0aad19ca34f8dc66d1'; // Pre-created shared bin for everyone
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -1015,21 +1017,27 @@
         }
 
         async function loadCloudLeaderboard() {
-            if (!USE_CLOUD_LEADERBOARD || !JSONBIN_BIN_ID) {
+            if (!USE_CLOUD_LEADERBOARD || !SHARED_BIN_ID) {
+                console.log('Cloud leaderboard disabled or no bin ID yet');
                 displayLeaderboard();
                 return;
             }
 
+            console.log('🔍 Loading from Bin ID:', SHARED_BIN_ID);
+            
             try {
-                const response = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID + '/latest', {
+                const response = await fetch('https://api.jsonbin.io/v3/b/' + SHARED_BIN_ID + '/latest', {
                     method: 'GET',
                     headers: {
                         'X-Master-Key': JSONBIN_API_KEY
                     }
                 });
 
+                console.log('📥 Load response status:', response.status);
+
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('📦 Received cloud leaderboard with', (data.record.leaderboard || []).length, 'players');
                     const cloudLeaderboard = data.record.leaderboard || [];
                     
                     const localData = getLeaderboard();
@@ -1049,37 +1057,73 @@
                     
                     saveLeaderboard(finalLeaderboard);
                     displayLeaderboard();
-                    console.log('✅ Global leaderboard loaded! All players share this leaderboard.');
+                    console.log('✅ Global leaderboard loaded successfully!');
                 } else {
-                    console.log('⚠️ Could not load global leaderboard, status:', response.status);
+                    const errorText = await response.text();
+                    console.log('❌ Load failed. Status:', response.status, 'Error:', errorText);
                     displayLeaderboard();
                 }
             } catch (error) {
-                console.log('⚠️ Cloud unavailable:', error.message);
+                console.log('❌ Load error:', error.message);
                 displayLeaderboard();
             }
         }
 
         async function saveToCloud(leaderboard) {
-            if (!USE_CLOUD_LEADERBOARD || !JSONBIN_BIN_ID) return;
+            if (!USE_CLOUD_LEADERBOARD) {
+                console.log('Cloud save disabled');
+                return;
+            }
+
+            console.log('💾 Attempting to save leaderboard with', leaderboard.length, 'players');
 
             try {
-                const response = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': JSONBIN_API_KEY
-                    },
-                    body: JSON.stringify({ leaderboard: leaderboard })
-                });
+                if (!SHARED_BIN_ID) {
+                    console.log('🆕 No bin exists, creating new shared bin...');
+                    const createResponse = await fetch('https://api.jsonbin.io/v3/b', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': JSONBIN_API_KEY,
+                            'X-Bin-Name': 'worlds-hardest-game-global-leaderboard'
+                        },
+                        body: JSON.stringify({ leaderboard: leaderboard })
+                    });
 
-                if (response.ok) {
-                    console.log('✅ Saved to global leaderboard! All players will see this.');
+                    console.log('🆕 Create response status:', createResponse.status);
+
+                    if (createResponse.ok) {
+                        const data = await createResponse.json();
+                        SHARED_BIN_ID = data.metadata.id;
+                        console.log('🎉 Created shared bin! ID:', SHARED_BIN_ID);
+                        console.log('⚠️ IMPORTANT: Copy this Bin ID and add it to line 357 of index.html:');
+                        console.log('   let SHARED_BIN_ID = "' + SHARED_BIN_ID + '";');
+                    } else {
+                        const errorText = await createResponse.text();
+                        console.log('❌ Failed to create bin. Status:', createResponse.status, 'Error:', errorText);
+                    }
                 } else {
-                    console.log('❌ Save failed, status:', response.status);
+                    console.log('📤 Updating existing bin:', SHARED_BIN_ID);
+                    const response = await fetch('https://api.jsonbin.io/v3/b/' + SHARED_BIN_ID, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': JSONBIN_API_KEY
+                        },
+                        body: JSON.stringify({ leaderboard: leaderboard })
+                    });
+
+                    console.log('📤 Save response status:', response.status);
+
+                    if (response.ok) {
+                        console.log('✅ Saved to global leaderboard successfully!');
+                    } else {
+                        const errorText = await response.text();
+                        console.log('❌ Save failed. Status:', response.status, 'Error:', errorText);
+                    }
                 }
             } catch (error) {
-                console.error('❌ Cloud save error:', error.message);
+                console.error('❌ Save error:', error.message);
             }
         }
 
