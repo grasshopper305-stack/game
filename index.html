@@ -353,6 +353,11 @@
     </div>
 
     <script>
+        // Shared Global Leaderboard Configuration
+        const JSONBIN_API_KEY = '$2a$10$jKZvN.eBHwYqH.3mH8fqPOxOqfH7VqfH7VqfH7VqfH7VqfH7Vqf';
+        const JSONBIN_BIN_ID = '679e4c3be41b4d34e4753456';
+        const USE_CLOUD_LEADERBOARD = true;
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const messageDiv = document.getElementById('message');
@@ -604,30 +609,153 @@
             },
             {
                 player: { x: 50, y: 200 },
+                start: { x: 20, y: 120, width: 80, height: 160 },
+                end: { x: 500, y: 120, width: 80, height: 160 },
+                walls: [
+                    { x: 0, y: 0, width: 600, height: 110 },
+                    { x: 0, y: 290, width: 600, height: 110 }
+                ],
+                enemies: [
+                    { x: 150, y: 150, radius: 10, speedX: 2.5, speedY: 0, color: '#00ffff' },
+                    { x: 250, y: 200, radius: 10, speedX: -2.5, speedY: 0, color: '#00ccff' },
+                    { x: 350, y: 250, radius: 10, speedX: 2.5, speedY: 0, color: '#0099ff' },
+                    { x: 300, y: 175, radius: 10, speedX: 0, speedY: 2, color: '#00ffff' },
+                    { x: 400, y: 225, radius: 10, speedX: 0, speedY: -2, color: '#00ccff' }
+                ],
+                coins: [
+                    { x: 200, y: 200, radius: 8, collected: false },
+                    { x: 300, y: 200, radius: 8, collected: false },
+                    { x: 400, y: 200, radius: 8, collected: false }
+                ]
+            },
+            {
+                player: { x: 50, y: 200 },
+                start: { x: 20, y: 150, width: 80, height: 100 },
+                end: { x: 500, y: 150, width: 80, height: 100 },
+                walls: [
+                    { x: 0, y: 0, width: 600, height: 140 },
+                    { x: 0, y: 260, width: 600, height: 140 },
+                    { x: 200, y: 170, width: 80, height: 60 },
+                    { x: 320, y: 170, width: 80, height: 60 }
+                ],
+                enemies: [
+                    { x: 150, y: 200, radius: 10, speedX: 2, speedY: 0, color: '#00ffff' },
+                    { x: 260, y: 200, radius: 10, speedX: 0, speedY: 2.5, color: '#00ccff' },
+                    { x: 360, y: 200, radius: 10, speedX: 0, speedY: -2.5, color: '#0099ff' },
+                    { x: 450, y: 200, radius: 10, speedX: -2, speedY: 0, color: '#00ffff' }
+                ],
+                coins: [
+                    { x: 180, y: 200, radius: 8, collected: false },
+                    { x: 260, y: 200, radius: 8, collected: false },
+                    { x: 360, y: 200, radius: 8, collected: false },
+                    { x: 440, y: 200, radius: 8, collected: false }
+                ]
+            },
+            {
+                player: { x: 50, y: 200 },
+                start: { x: 20, y: 130, width: 80, height: 140 },
+                end: { x: 500, y: 130, width: 80, height: 140 },
+                walls: [
+                    { x: 0, y: 0, width: 600, height: 120 },
+                    { x: 0, y: 280, width: 600, height: 120 }
+                ],
+                enemies: [
+                    { x: 150, y: 160, radius: 10, speedX: 2, speedY: 1.5, color: '#00ffff' },
+                    { x: 200, y: 240, radius: 10, speedX: -2, speedY: -1.5, color: '#00ccff' },
+                    { x: 280, y: 160, radius: 10, speedX: 2, speedY: 1.5, color: '#0099ff' },
+                    { x: 330, y: 240, radius: 10, speedX: -2, speedY: -1.5, color: '#00ffff' },
+                    { x: 400, y: 180, radius: 10, speedX: 1.5, speedY: 2, color: '#00ccff' },
+                    { x: 250, y: 200, radius: 10, speedX: -1.5, speedY: 1.5, color: '#0099ff' }
+                ],
+                coins: [
+                    { x: 200, y: 200, radius: 8, collected: false },
+                    { x: 320, y: 200, radius: 8, collected: false },
+                    { x: 400, y: 200, radius: 8, collected: false }
+                ]
+            },
+            {
+                player: { x: 50, y: 200 },
+                start: { x: 20, y: 140, width: 80, height: 120 },
+                end: { x: 500, y: 140, width: 80, height: 120 },
+                walls: [
+                    { x: 0, y: 0, width: 600, height: 130 },
+                    { x: 0, y: 270, width: 600, height: 130 },
+                    { x: 180, y: 160, width: 30, height: 80 },
+                    { x: 280, y: 160, width: 30, height: 80 },
+                    { x: 380, y: 160, width: 30, height: 80 }
+                ],
+                enemies: [
+                    { x: 140, y: 180, radius: 10, speedX: 0, speedY: 2.5, color: '#00ffff' },
+                    { x: 140, y: 220, radius: 10, speedX: 0, speedY: -2.5, color: '#00ccff' },
+                    { x: 240, y: 180, radius: 10, speedX: 0, speedY: 2.5, color: '#0099ff' },
+                    { x: 240, y: 220, radius: 10, speedX: 0, speedY: -2.5, color: '#00ffff' },
+                    { x: 340, y: 180, radius: 10, speedX: 0, speedY: 2.5, color: '#00ccff' },
+                    { x: 340, y: 220, radius: 10, speedX: 0, speedY: -2.5, color: '#0099ff' },
+                    { x: 440, y: 200, radius: 10, speedX: -2, speedY: 1, color: '#00ffff' }
+                ],
+                coins: [
+                    { x: 155, y: 200, radius: 8, collected: false },
+                    { x: 255, y: 200, radius: 8, collected: false },
+                    { x: 355, y: 200, radius: 8, collected: false },
+                    { x: 440, y: 200, radius: 8, collected: false }
+                ]
+            },
+            {
+                player: { x: 50, y: 200 },
+                start: { x: 20, y: 120, width: 80, height: 160 },
+                end: { x: 500, y: 120, width: 80, height: 160 },
+                walls: [
+                    { x: 0, y: 0, width: 600, height: 110 },
+                    { x: 0, y: 290, width: 600, height: 110 }
+                ],
+                enemies: [
+                    { x: 150, y: 150, radius: 10, speedX: 2.5, speedY: 1, color: '#00ffff' },
+                    { x: 200, y: 250, radius: 10, speedX: -2.5, speedY: -1, color: '#00ccff' },
+                    { x: 250, y: 150, radius: 10, speedX: 2.5, speedY: 1, color: '#0099ff' },
+                    { x: 300, y: 250, radius: 10, speedX: -2.5, speedY: -1, color: '#00ffff' },
+                    { x: 350, y: 150, radius: 10, speedX: 2.5, speedY: 1, color: '#00ccff' },
+                    { x: 400, y: 250, radius: 10, speedX: -2.5, speedY: -1, color: '#0099ff' },
+                    { x: 450, y: 200, radius: 10, speedX: -2, speedY: 0, color: '#00ffff' },
+                    { x: 300, y: 200, radius: 10, speedX: 1.5, speedY: 1.5, color: '#00ccff' }
+                ],
+                coins: [
+                    { x: 180, y: 200, radius: 8, collected: false },
+                    { x: 260, y: 180, radius: 8, collected: false },
+                    { x: 340, y: 220, radius: 8, collected: false },
+                    { x: 420, y: 200, radius: 8, collected: false }
+                ]
+            },
+            {
+                player: { x: 50, y: 200 },
                 start: { x: 20, y: 100, width: 80, height: 200 },
                 end: { x: 500, y: 100, width: 80, height: 200 },
                 walls: [
                     { x: 0, y: 0, width: 600, height: 90 },
                     { x: 0, y: 310, width: 600, height: 90 },
-                    { x: 180, y: 140, width: 40, height: 120 },
-                    { x: 280, y: 140, width: 40, height: 120 },
-                    { x: 380, y: 140, width: 40, height: 120 }
+                    { x: 150, y: 140, width: 40, height: 60 },
+                    { x: 150, y: 200, width: 40, height: 60 },
+                    { x: 250, y: 140, width: 40, height: 60 },
+                    { x: 250, y: 200, width: 40, height: 60 },
+                    { x: 350, y: 140, width: 40, height: 60 },
+                    { x: 350, y: 200, width: 40, height: 60 }
                 ],
                 enemies: [
-                    { x: 140, y: 120, radius: 10, speedX: 0, speedY: 3, color: '#00ffff' },
-                    { x: 140, y: 280, radius: 10, speedX: 0, speedY: -3, color: '#00ccff' },
-                    { x: 240, y: 120, radius: 10, speedX: 0, speedY: 3, color: '#0099ff' },
-                    { x: 240, y: 280, radius: 10, speedX: 0, speedY: -3, color: '#00ffff' },
-                    { x: 340, y: 120, radius: 10, speedX: 0, speedY: 3, color: '#00ccff' },
-                    { x: 340, y: 280, radius: 10, speedX: 0, speedY: -3, color: '#0099ff' },
-                    { x: 440, y: 120, radius: 10, speedX: 0, speedY: 3, color: '#00ffff' },
-                    { x: 440, y: 280, radius: 10, speedX: 0, speedY: -3, color: '#00ccff' }
+                    { x: 120, y: 170, radius: 10, speedX: 0, speedY: 2.5, color: '#00ffff' },
+                    { x: 120, y: 230, radius: 10, speedX: 0, speedY: -2.5, color: '#00ccff' },
+                    { x: 220, y: 170, radius: 10, speedX: 0, speedY: 2.5, color: '#0099ff' },
+                    { x: 220, y: 230, radius: 10, speedX: 0, speedY: -2.5, color: '#00ffff' },
+                    { x: 320, y: 170, radius: 10, speedX: 0, speedY: 2.5, color: '#00ccff' },
+                    { x: 320, y: 230, radius: 10, speedX: 0, speedY: -2.5, color: '#0099ff' },
+                    { x: 420, y: 150, radius: 10, speedX: 0, speedY: 2.5, color: '#00ffff' },
+                    { x: 420, y: 250, radius: 10, speedX: 0, speedY: -2.5, color: '#00ccff' },
+                    { x: 300, y: 200, radius: 10, speedX: 2, speedY: 0, color: '#0099ff' }
                 ],
                 coins: [
-                    { x: 160, y: 200, radius: 8, collected: false },
-                    { x: 260, y: 200, radius: 8, collected: false },
-                    { x: 360, y: 200, radius: 8, collected: false },
-                    { x: 460, y: 200, radius: 8, collected: false }
+                    { x: 120, y: 200, radius: 8, collected: false },
+                    { x: 220, y: 200, radius: 8, collected: false },
+                    { x: 320, y: 200, radius: 8, collected: false },
+                    { x: 420, y: 200, radius: 8, collected: false },
+                    { x: 470, y: 200, radius: 8, collected: false }
                 ]
             }
         ];
@@ -887,6 +1015,73 @@
             localStorage.setItem('gameLeaderboard', JSON.stringify(leaderboard));
         }
 
+        async function loadCloudLeaderboard() {
+            if (!USE_CLOUD_LEADERBOARD) {
+                displayLeaderboard();
+                return;
+            }
+
+            try {
+                const response = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID + '/latest', {
+                    method: 'GET',
+                    headers: {
+                        'X-Master-Key': JSONBIN_API_KEY
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const cloudLeaderboard = data.record.leaderboard || [];
+                    
+                    const localData = getLeaderboard();
+                    const merged = cloudLeaderboard.slice();
+                    
+                    localData.forEach(local => {
+                        const existing = merged.find(m => m.nickname === local.nickname);
+                        if (!existing) {
+                            merged.push(local);
+                        } else if (local.level > existing.level) {
+                            existing.level = local.level;
+                        }
+                    });
+                    
+                    merged.sort((a, b) => b.level - a.level);
+                    const finalLeaderboard = merged.slice(0, 10);
+                    
+                    saveLeaderboard(finalLeaderboard);
+                    displayLeaderboard();
+                    console.log('Global leaderboard loaded!');
+                } else {
+                    console.log('Using local leaderboard');
+                    displayLeaderboard();
+                }
+            } catch (error) {
+                console.log('Cloud unavailable, using local');
+                displayLeaderboard();
+            }
+        }
+
+        async function saveToCloud(leaderboard) {
+            if (!USE_CLOUD_LEADERBOARD) return;
+
+            try {
+                const response = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
+                    body: JSON.stringify({ leaderboard: leaderboard })
+                });
+
+                if (response.ok) {
+                    console.log('Saved to global leaderboard!');
+                }
+            } catch (error) {
+                console.log('Cloud save failed, saved locally');
+            }
+        }
+
         function updateLeaderboard(nickname, level) {
             let leaderboard = getLeaderboard();
             
@@ -905,6 +1100,7 @@
             
             saveLeaderboard(leaderboard);
             displayLeaderboard();
+            saveToCloud(leaderboard);
         }
 
         function displayLeaderboard() {
@@ -970,7 +1166,7 @@
 
         loadLevel(1);
         canvas.focus();
-        displayLeaderboard();
+        loadCloudLeaderboard();
         gameLoop();
     </script>
 </body>
