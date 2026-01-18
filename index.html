@@ -353,13 +353,6 @@
     </div>
 
     <script>
-        // Shared Public JSONBin Configuration (No setup needed!)
-        // This uses a public bin that all players share
-        const JSONBIN_API_KEY = '$2a$10$jKZvN.eBHwYqH.3mH8fqPOxOqfH7VqfH7VqfH7VqfH7VqfH7Vqf'; // Shared public key
-        const JSONBIN_BIN_ID = '679e4c3be41b4d34e4753456'; // Shared public bin
-        
-        let jsonBinEnabled = true; // Always enabled with shared bin
-
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const messageDiv = document.getElementById('message');
@@ -375,7 +368,7 @@
         let playerNickname = null;
         let gamePaused = true; // Start with game paused
 
-        // Leaderboard data (stored in localStorage and JSONBin)
+        // Leaderboard data (stored in localStorage)
         function getLeaderboard() {
             const saved = localStorage.getItem('gameLeaderboard');
             return saved ? JSON.parse(saved) : [];
@@ -385,93 +378,7 @@
             localStorage.setItem('gameLeaderboard', JSON.stringify(leaderboard));
         }
 
-        // JSONBin API functions
-        async function loadJSONBinLeaderboard() {
-            if (!jsonBinEnabled) {
-                displayLeaderboard();
-                return;
-            }
-
-            try {
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-                    method: 'GET',
-                    headers: {
-                        'X-Master-Key': JSONBIN_API_KEY
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const cloudLeaderboard = data.record.leaderboard || [];
-                    
-                    // Merge with local data
-                    const localData = getLeaderboard();
-                    const merged = [...cloudLeaderboard];
-                    
-                    localData.forEach(local => {
-                        const existing = merged.find(m => m.nickname === local.nickname);
-                        if (!existing) {
-                            merged.push(local);
-                        } else if (local.level > existing.level) {
-                            existing.level = local.level;
-                        }
-                    });
-                    
-                    merged.sort((a, b) => b.level - a.level);
-                    const finalLeaderboard = merged.slice(0, 10);
-                    
-                    saveLeaderboard(finalLeaderboard);
-                    displayLeaderboardData(finalLeaderboard);
-                    console.log("🌍 Global leaderboard loaded!");
-                } else {
-                    console.log("⚠️ Using local leaderboard");
-                    displayLeaderboard();
-                }
-            } catch (error) {
-                console.log("⚠️ Cloud unavailable, using local storage");
-                displayLeaderboard();
-            }
-        }
-                    displayLeaderboardData(finalLeaderboard);
-                    console.log("Leaderboard loaded from JSONBin!");
-                } else {
-                    console.error("Failed to load from JSONBin:", response.status);
-                    displayLeaderboard();
-                }
-            } catch (error) {
-                console.error("JSONBin load error:", error);
-                displayLeaderboard();
-            }
-        }
-
-        async function saveToJSONBin(leaderboard) {
-            if (!jsonBinEnabled) {
-                return;
-            }
-
-            try {
-                // Update the shared bin
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': JSONBIN_API_KEY
-                    },
-                    body: JSON.stringify({ leaderboard })
-                });
-
-                if (response.ok) {
-                    console.log("✅ Leaderboard saved to shared cloud!");
-                } else {
-                    console.log("⚠️ Using local leaderboard only");
-                }
-            } catch (error) {
-                console.log("⚠️ Cloud sync unavailable, using local storage");
-            }
-        }
-
-        async function updateLeaderboard(nickname, level) {
-            // Update locally first
+        function updateLeaderboard(nickname, level) {
             let leaderboard = getLeaderboard();
             
             // Check if player already exists
@@ -494,13 +401,11 @@
             leaderboard = leaderboard.slice(0, 10);
             
             saveLeaderboard(leaderboard);
-            displayLeaderboardData(leaderboard);
-
-            // Save to JSONBin
-            await saveToJSONBin(leaderboard);
+            displayLeaderboard();
         }
 
-        function displayLeaderboardData(leaderboard) {
+        function displayLeaderboard() {
+            const leaderboard = getLeaderboard();
             const list = document.getElementById('leaderboardList');
             list.innerHTML = '';
             
@@ -517,11 +422,6 @@
                 `;
                 list.appendChild(li);
             });
-        }
-
-        function displayLeaderboard() {
-            const leaderboard = getLeaderboard();
-            displayLeaderboardData(leaderboard);
         }
 
         // Show nickname prompt on load
@@ -1116,14 +1016,7 @@
         // Start game
         loadLevel(1);
         canvas.focus(); // Ensure canvas has focus for keyboard input
-        
-        // Load leaderboard from JSONBin or localStorage
-        if (jsonBinEnabled) {
-            loadJSONBinLeaderboard();
-        } else {
-            displayLeaderboard();
-        }
-        
+        displayLeaderboard(); // Show initial leaderboard
         gameLoop();
     </script>
 </body>
