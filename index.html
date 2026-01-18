@@ -353,9 +353,8 @@
     </div>
 
     <script>
-        // Shared Global Leaderboard Configuration
+        // Shared Global Leaderboard - Your JSONBin API Key
         const JSONBIN_API_KEY = '$2a$10$EfY5xkmatdHak8/IeaIUau1a0ZthrfyFY9×3ejlajKhd1npnHgmYK';
-        const JSONBIN_BIN_ID = ''; // Will be created on first play
         const USE_CLOUD_LEADERBOARD = true;
 
         const canvas = document.getElementById('gameCanvas');
@@ -1021,10 +1020,10 @@
                 return;
             }
 
-            const binId = JSONBIN_BIN_ID || localStorage.getItem('game_jsonbin_id');
+            const binId = localStorage.getItem('game_jsonbin_id');
             
             if (!binId) {
-                console.log('No bin yet, will create on first score');
+                console.log('No bin yet, will create when you complete first level');
                 displayLeaderboard();
                 return;
             }
@@ -1058,13 +1057,13 @@
                     
                     saveLeaderboard(finalLeaderboard);
                     displayLeaderboard();
-                    console.log('Global leaderboard loaded!');
+                    console.log('✅ Global leaderboard loaded!');
                 } else {
-                    console.log('Using local leaderboard');
+                    console.log('⚠️ Using local leaderboard');
                     displayLeaderboard();
                 }
             } catch (error) {
-                console.log('Cloud unavailable, using local');
+                console.log('⚠️ Cloud unavailable, using local');
                 displayLeaderboard();
             }
         }
@@ -1073,10 +1072,11 @@
             if (!USE_CLOUD_LEADERBOARD) return;
 
             try {
-                let binId = JSONBIN_BIN_ID || localStorage.getItem('game_jsonbin_id');
+                let binId = localStorage.getItem('game_jsonbin_id');
                 
                 if (!binId) {
                     // Create new bin
+                    console.log('Creating new global leaderboard...');
                     const createResponse = await fetch('https://api.jsonbin.io/v3/b', {
                         method: 'POST',
                         headers: {
@@ -1091,8 +1091,10 @@
                         const data = await createResponse.json();
                         binId = data.metadata.id;
                         localStorage.setItem('game_jsonbin_id', binId);
-                        console.log('Created global leaderboard! Bin ID: ' + binId);
-                        console.log('IMPORTANT: Add this to your code: const JSONBIN_BIN_ID = "' + binId + '";');
+                        console.log('🎉 Created global leaderboard! Bin ID: ' + binId);
+                        console.log('✅ All future players will now share this leaderboard!');
+                    } else {
+                        console.log('❌ Failed to create bin:', createResponse.status);
                     }
                 } else {
                     // Update existing bin
@@ -1106,11 +1108,13 @@
                     });
 
                     if (response.ok) {
-                        console.log('Saved to global leaderboard!');
+                        console.log('✅ Saved to global leaderboard!');
+                    } else {
+                        console.log('❌ Save failed:', response.status);
                     }
                 }
             } catch (error) {
-                console.log('Cloud save failed, saved locally');
+                console.error('❌ Cloud save error:', error);
             }
         }
 
