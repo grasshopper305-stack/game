@@ -353,12 +353,13 @@
     </div>
 
     <script>
-        // JSONBin with Access Key (CORS-friendly for browsers)
-        const JSONBIN_ACCESS_KEY = '$2a$10$E9lQqx2gmpFXfZ9yIOJgnOdBdz.whsawdG53fp3wDFVUNSS/x0bGa';
-        const JSONBIN_BIN_ID = '696d72aa43b1c97be9398910';
+        // JSONBin with game2 Access Key (READ + UPDATE permissions)
+        const JSONBIN_ACCESS_KEY = '$2a$10$Bycbk25HM2Uqrz7rJMddgelJdqCymoM/5s1D2Gg43ga01ecXjqOMa';
+        const JSONBIN_BIN_ID = '696d86afae596e708fe5889d';
         const USE_CLOUD_LEADERBOARD = true;
 
-        console.log('🎮 Game loaded - Using JSONBin with Access Key');
+        console.log('🎮 Game loaded - JSONBin with game2 Access Key');
+        console.log('📦 Bin ID:', JSONBIN_BIN_ID);
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
