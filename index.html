@@ -353,13 +353,12 @@
     </div>
 
     <script>
-        // VERSION 2.0 - CACHE BUSTER 2026-01-18-1900
-        // Shared Global Leaderboard - YOUR REAL credentials
-        const JSONBIN_API_KEY = '$2a$10$EfY5xkmatdHak8/IeaIUau1a0ZthrfyFY9×3ejlajKhd1npnHgmYK';
-        const SHARED_BIN_ID = '696d72aa43b1c97be9398910'; // Your actual bin - CONFIRMED CORRECT
+        // JSONBin with Access Key (CORS-friendly for browsers)
+        const JSONBIN_ACCESS_KEY = '$2a$10$E9lQqx2gmpFXfZ9yIOJgnOdBdz.whsawdG53fp3wDFVUNSS/x0bGa';
+        const JSONBIN_BIN_ID = '696d72aa43b1c97be9398910';
         const USE_CLOUD_LEADERBOARD = true;
 
-        console.log('🎮 Game loaded - Bin ID:', SHARED_BIN_ID);
+        console.log('🎮 Game loaded - Using JSONBin with Access Key');
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -1018,30 +1017,29 @@
         }
 
         async function loadCloudLeaderboard() {
-            if (!USE_CLOUD_LEADERBOARD || !SHARED_BIN_ID) {
-                console.log('Cloud leaderboard disabled or no bin ID yet');
+            if (!USE_CLOUD_LEADERBOARD || !JSONBIN_BIN_ID) {
+                console.log('Cloud leaderboard disabled');
                 displayLeaderboard();
                 return;
             }
 
-            console.log('🔍 Loading from Bin ID:', SHARED_BIN_ID);
+            console.log('🔍 Loading leaderboard from JSONBin...');
             
             try {
-                // Try without /latest first
-                const response = await fetch('https://api.jsonbin.io/v3/b/' + SHARED_BIN_ID, {
+                const response = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID + '/latest', {
                     method: 'GET',
                     headers: {
-                        'X-Master-Key': JSONBIN_API_KEY,
-                        'X-Bin-Meta': 'false'
+                        'X-Access-Key': JSONBIN_ACCESS_KEY
                     }
                 });
 
-                console.log('📥 Load response status:', response.status);
+                console.log('📥 JSONBin load status:', response.status);
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('📦 Received cloud leaderboard with', (data.record?.leaderboard || data.leaderboard || []).length, 'players');
-                    const cloudLeaderboard = data.record?.leaderboard || data.leaderboard || [];
+                    const cloudLeaderboard = data.record.leaderboard || [];
+                    
+                    console.log('📦 Loaded', cloudLeaderboard.length, 'players from cloud');
                     
                     const localData = getLeaderboard();
                     const merged = cloudLeaderboard.slice();
@@ -1060,12 +1058,10 @@
                     
                     saveLeaderboard(finalLeaderboard);
                     displayLeaderboard();
-                    console.log('✅ Global leaderboard loaded successfully!');
+                    console.log('✅ Global leaderboard loaded from JSONBin!');
                 } else {
                     const errorText = await response.text();
-                    console.log('❌ Load failed. Status:', response.status);
-                    console.log('❌ Error details:', errorText);
-                    console.log('💡 Please verify Bin ID is correct: ' + SHARED_BIN_ID);
+                    console.log('❌ JSONBin load failed:', response.status, errorText);
                     displayLeaderboard();
                 }
             } catch (error) {
@@ -1075,56 +1071,35 @@
         }
 
         async function saveToCloud(leaderboard) {
-            if (!USE_CLOUD_LEADERBOARD) {
+            if (!USE_CLOUD_LEADERBOARD || !JSONBIN_BIN_ID) {
                 console.log('Cloud save disabled');
                 return;
             }
 
-            console.log('💾 Attempting to save leaderboard with', leaderboard.length, 'players');
+            console.log('💾 Saving', leaderboard.length, 'players to JSONBin...');
 
             try {
-                if (!SHARED_BIN_ID) {
-                    console.log('🆕 No bin exists, creating new shared bin...');
-                    const createResponse = await fetch('https://api.jsonbin.io/v3/b', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Master-Key': JSONBIN_API_KEY,
-                            'X-Bin-Name': 'worlds-hardest-game-global-leaderboard'
-                        },
-                        body: JSON.stringify({ leaderboard: leaderboard })
-                    });
+                const response = await fetch('https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Access-Key': JSONBIN_ACCESS_KEY
+                    },
+                    body: JSON.stringify({ leaderboard: leaderboard })
+                });
 
-                    console.log('🆕 Create response status:', createResponse.status);
+                console.log('📤 JSONBin save status:', response.status);
 
-                    if (createResponse.ok) {
-                        const data = await createResponse.json();
-                        SHARED_BIN_ID = data.metadata.id;
-                        console.log('🎉 Created shared bin! ID:', SHARED_BIN_ID);
-                        console.log('⚠️ IMPORTANT: Copy this Bin ID and add it to line 357 of index.html:');
-                        console.log('   let SHARED_BIN_ID = "' + SHARED_BIN_ID + '";');
-                    } else {
-                        const errorText = await createResponse.text();
-                        console.log('❌ Failed to create bin. Status:', createResponse.status, 'Error:', errorText);
-                    }
+                if (response.ok) {
+                    console.log('✅ Saved to JSONBin! All players will see this.');
                 } else {
-                    console.log('📤 Updating existing bin:', SHARED_BIN_ID);
-                    const response = await fetch('https://api.jsonbin.io/v3/b/' + SHARED_BIN_ID, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Master-Key': JSONBIN_API_KEY
-                        },
-                        body: JSON.stringify({ leaderboard: leaderboard })
-                    });
-
-                    console.log('📤 Save response status:', response.status);
-
-                    if (response.ok) {
-                        console.log('✅ Saved to global leaderboard successfully!');
-                    } else {
-                        const errorText = await response.text();
-                        console.log('❌ Save failed. Status:', response.status, 'Error:', errorText);
+                    const errorText = await response.text();
+                    console.log('❌ JSONBin save failed:', response.status, errorText);
+                }
+            } catch (error) {
+                console.error('❌ Save error:', error.message);
+            }
+        }
                     }
                 }
             } catch (error) {
