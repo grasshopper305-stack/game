@@ -353,10 +353,13 @@
     </div>
 
     <script>
+        // VERSION 2.0 - CACHE BUSTER 2026-01-18-1900
         // Shared Global Leaderboard - YOUR REAL credentials
         const JSONBIN_API_KEY = '$2a$10$EfY5xkmatdHak8/IeaIUau1a0ZthrfyFY9×3ejlajKhd1npnHgmYK';
-        const SHARED_BIN_ID = '696d72aa43b1c97be9398910'; // Your actual bin
+        const SHARED_BIN_ID = '696d72aa43b1c97be9398910'; // Your actual bin - CONFIRMED CORRECT
         const USE_CLOUD_LEADERBOARD = true;
+
+        console.log('🎮 Game loaded - Bin ID:', SHARED_BIN_ID);
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
